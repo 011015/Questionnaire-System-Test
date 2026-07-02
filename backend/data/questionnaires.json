@@ -1,0 +1,125 @@
+{
+  "onboarding-health-check": {
+    "id": "onboarding-health-check",
+    "title": "Onboarding Health Check",
+    "description": "A short demo questionnaire showing branching, skip logic, and scoring-based gating.",
+    "version": 1,
+    "questions": [
+      {
+        "id": "q_employment",
+        "type": "single",
+        "title": "What is your current employment status?",
+        "required": true,
+        "options": [
+          { "id": "opt_employed", "label": "Employed", "value": "employed" },
+          { "id": "opt_selfemployed", "label": "Self-employed", "value": "self_employed" },
+          { "id": "opt_unemployed", "label": "Not currently working", "value": "unemployed" }
+        ]
+      },
+      {
+        "id": "q_employer",
+        "type": "text",
+        "title": "What is your employer's name?",
+        "placeholder": "Acme Inc.",
+        "visibleIf": {
+          "kind": "condition",
+          "source": "answer",
+          "questionId": "q_employment",
+          "operator": "eq",
+          "value": "employed"
+        }
+      },
+      {
+        "id": "q_business_type",
+        "type": "single",
+        "title": "What type of business do you run?",
+        "options": [
+          { "id": "opt_sole", "label": "Sole proprietorship", "value": "sole" },
+          { "id": "opt_llc", "label": "LLC / Corporation", "value": "llc" }
+        ],
+        "visibleIf": {
+          "kind": "condition",
+          "source": "answer",
+          "questionId": "q_employment",
+          "operator": "eq",
+          "value": "self_employed"
+        }
+      },
+      {
+        "id": "q_job_search",
+        "type": "single",
+        "title": "Are you actively looking for work?",
+        "options": [
+          { "id": "opt_yes", "label": "Yes", "value": "yes" },
+          { "id": "opt_no", "label": "No", "value": "no" }
+        ],
+        "visibleIf": {
+          "kind": "condition",
+          "source": "answer",
+          "questionId": "q_employment",
+          "operator": "eq",
+          "value": "unemployed"
+        }
+      },
+      {
+        "id": "q_risk_symptoms",
+        "type": "multiple",
+        "title": "Have you experienced any of the following in the last 2 weeks?",
+        "options": [
+          { "id": "opt_fatigue", "label": "Fatigue", "value": "fatigue", "score": 2 },
+          { "id": "opt_fever", "label": "Fever", "value": "fever", "score": 4 },
+          { "id": "opt_cough", "label": "Persistent cough", "value": "cough", "score": 3 },
+          { "id": "opt_none", "label": "None of the above", "value": "none", "score": 0 }
+        ]
+      },
+      {
+        "id": "q_recent_travel",
+        "type": "single",
+        "title": "Have you traveled internationally in the last 30 days?",
+        "options": [
+          { "id": "opt_travel_yes", "label": "Yes", "value": "yes", "score": 3 },
+          { "id": "opt_travel_no", "label": "No", "value": "no", "score": 0 }
+        ]
+      },
+      {
+        "id": "q_followup_required",
+        "type": "text",
+        "title": "Your combined responses suggest a follow-up is recommended. Please describe your symptoms in more detail.",
+        "visibleIf": {
+          "kind": "group",
+          "combinator": "OR",
+          "rules": [
+            { "kind": "condition", "source": "score", "scoreId": "riskScore", "operator": "gte", "value": 5 },
+            {
+              "kind": "group",
+              "combinator": "AND",
+              "rules": [
+                { "kind": "condition", "source": "answer", "questionId": "q_recent_travel", "operator": "eq", "value": "yes" },
+                { "kind": "condition", "source": "answer", "questionId": "q_risk_symptoms", "operator": "includes", "value": "fever" }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "id": "q_all_clear",
+        "type": "text",
+        "title": "No follow-up needed. Any other comments before you finish?",
+        "visibleIf": {
+          "kind": "condition",
+          "source": "score",
+          "scoreId": "riskScore",
+          "operator": "lt",
+          "value": 5
+        }
+      }
+    ],
+    "scoring": [
+      {
+        "id": "riskScore",
+        "label": "Health Risk Score",
+        "questionIds": ["q_risk_symptoms", "q_recent_travel"]
+      }
+    ]
+  }
+}
