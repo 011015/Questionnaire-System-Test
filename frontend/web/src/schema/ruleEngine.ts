@@ -52,7 +52,7 @@ function evaluateCondition(cond: Condition, ctx: EvalContext): boolean {
     case 'gte':
     case 'lt':
     case 'lte': {
-      const left = cond.source === 'score' ? toNumber(scoreVal) : toNumber(raw?.[0]);
+      const left = cond.source === 'score' ? toNumber(scoreVal) : toNumber(toArray(raw)[0]);
       const right = toNumber(cond.value as number);
       if (left === undefined || right === undefined) return false;
       if (cond.operator === 'gt') return left > right;
