@@ -77,7 +77,7 @@ test.describe('Full-stack questionnaire flow (real browser, real backend)', () =
     await page.goto(`/?id=${id}`);
 
     await expect(page.getByText('What is your current employment status?')).toBeVisible();
-    await page.getByLabel('Employed').check();
+    await page.getByLabel('Employed', { exact: true }).check();
     await page.getByRole('button', { name: 'Next' }).click();
 
     await expect(page.getByText("What is your employer's name?")).toBeVisible();
@@ -132,7 +132,7 @@ test.describe('Full-stack questionnaire flow (real browser, real backend)', () =
     await seedQuestionnaire(request, id);
     await page.goto(`/?id=${id}`);
 
-    await page.getByLabel('Employed').check();
+    await page.getByLabel('Employed', { exact: true }).check();
     await page.getByRole('button', { name: 'Next' }).click();
     await expect(page.getByText("What is your employer's name?")).toBeVisible();
 

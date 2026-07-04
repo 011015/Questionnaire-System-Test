@@ -1,6 +1,6 @@
 import { defineConfig } from '@playwright/test';
 
-const WEB_PORT = 5174;
+const ADMIN_PORT = 5173;
 const API_PORT = 4000;
 
 export default defineConfig({
@@ -8,12 +8,10 @@ export default defineConfig({
   fullyParallel: true,
   retries: 0,
   use: {
-    baseURL: `http://localhost:${WEB_PORT}`,
+    baseURL: `http://localhost:${ADMIN_PORT}/`,
   },
-  // Spins up both the storage backend and this app's dev server for the
-  // duration of the test run. The backend is pointed at a throwaway data
-  // file (via QUESTIONNAIRES_DATA_FILE, see backend/src/server.js) so E2E
-  // runs never touch backend/data/questionnaires.json.
+  // Spins up both the storage backend and the Admin app's dev server for the
+  // duration of the test run.
   webServer: [
     {
       command: 'npm start',
@@ -26,9 +24,9 @@ export default defineConfig({
       },
     },
     {
-      command: 'npm run dev -- --port 5174',
+      command: 'npm run dev -- --port 5173',
       cwd: '.',
-      port: WEB_PORT,
+      port: ADMIN_PORT,
       reuseExistingServer: !process.env.CI,
       env: {
         VITE_API_URL: `http://localhost:${API_PORT}`,

@@ -7,5 +7,8 @@ export default defineConfig({
     environment: 'node',
     setupFiles: ['./src/setupTests.ts'],
     include: ['src/**/*.test.{ts,tsx}'],
+    env: {
+      VITE_API_URL: 'http://localhost:4000',
+    },
   },
 });
