@@ -18,6 +18,13 @@ function newOption(n: number): OptionDef {
 export function QuestionEditor({ question, index, allQuestions, scoring, onChange, onRemove, onMove }: Props) {
   const priorQuestions = allQuestions.slice(0, index); // can only depend on earlier questions
 
+  // Normalize visibleIf so the editor can handle stored condition objects
+  // (older saved schemas used a single Condition rather than a RuleGroup).
+  // Ensure we pass a RuleGroup to RuleGroupEditor.
+  const visibleGroup =
+    question.visibleIf && (question.visibleIf as any).kind === 'condition'
+      ? ({ kind: 'group', combinator: 'AND', rules: [(question.visibleIf as any)] } as RuleGroup)
+      : (question.visibleIf as RuleGroup | undefined);
   const setType = (type: QuestionType) => {
     onChange({
       ...question,
@@ -144,9 +151,9 @@ export function QuestionEditor({ question, index, allQuestions, scoring, onChang
           <input type="checkbox" checked={!!question.visibleIf} onChange={(e) => toggleConditional(e.target.checked)} />
           Conditionally visible
         </label>
-        {question.visibleIf && (
+        {visibleGroup && (
           <RuleGroupEditor
-            group={question.visibleIf}
+            group={visibleGroup}
             onChange={(g) => onChange({ ...question, visibleIf: g })}
             questions={priorQuestions}
             scoring={scoring}
