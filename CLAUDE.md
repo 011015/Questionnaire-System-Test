@@ -50,6 +50,34 @@ npm test
 When you change `ruleEngine.ts`, add or update the corresponding test case rather than only
 spot-checking manually — the suite is the source of truth now, not ad hoc scripts.
 
+## Other test layers
+
+Beyond the rule engine, each part of the stack has its own real test coverage:
+
+- **`backend`**: `npm test` runs `src/server.test.js` (supertest against the real Express app,
+  isolated to a throwaway data file via `QUESTIONNAIRES_DATA_FILE`) — full CRUD, 400/404 cases,
+  PUT upsert semantics, DELETE idempotency, and a check that the backend truly performs no
+  validation (constraint #1).
+- **`frontend/web`**: component tests (`QuestionRenderer.test.tsx`), a hook test
+  (`useQuestionnaireRuntime.test.ts`), and a full user-journey test
+  (`QuestionnaireRuntime.test.tsx`) that drives the rendered UI through real branching + scoring
+  paths — all in jsdom, no real network.
+- **`frontend/web/src/App.test.tsx`** is different from the others: it spawns the **real**
+  `backend/src/server.js` as a child process and renders the **real** `<App/>`, so it exercises
+  the actual `fetch()` → real HTTP → real Express path, not a mocked one. **Prerequisite:** the
+  backend's own dependencies must be installed first (`cd backend && npm install`) before running
+  `frontend/web`'s test suite, since this test spawns that code as a subprocess. If you see
+  "Backend did not become ready in time", the error message now includes the backend's captured
+  stderr — check for `MODULE_NOT_FOUND` there first.
+- **`frontend/admin`**: component tests for `ScoringEditor`, `RuleGroupEditor` (including nested
+  groups and the answer↔score source switch), and `QuestionEditor` (type switching, options CRUD,
+  the forward-reference constraint on `visibleIf` targets).
+- **`frontend/web/e2e/questionnaire-flow.spec.ts`** (Playwright): a real-browser, real-backend E2E
+  spec that boots both dev servers via `playwright.config.ts`. Run with
+  `npx playwright install && npm run test:e2e`. This one has **not** been executed by AI tooling in
+  this repo's history — browser binary installation was blocked by that environment's network
+  policy — so treat it as unverified until it's actually been run once.
+
 ## Things intentionally out of scope (per assessment brief)
 
 - Answer submission / persistence of user responses
