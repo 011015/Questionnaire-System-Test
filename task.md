@@ -37,7 +37,7 @@ UI exists is expensive to unwind.
 5. `frontend/admin` — authoring UI, including a recursive rule-group editor
    mirroring the recursive `RuleGroup` type.
 
-## 4. Verification performed
+## 4. Verification performed (initial pass)
 
 - `npm run build` (tsc + vite build) passes clean for both frontend apps —
   no `any`-driven type errors.
@@ -46,18 +46,54 @@ UI exists is expensive to unwind.
 - Rule engine exercised directly via `tsx` against the seed schema for:
   branching by single-choice answer (3 employment paths), a nested `AND`/`OR`
   visibility rule, and a scoring-threshold-gated question. All expected
-  visible-question sets matched. Command used is recorded in `CLAUDE.md` under
-  "Verifying changes" so it's repeatable.
+  visible-question sets matched.
 - Did **not** write an automated test suite (no framework was wired up) —
-  flagged as a known gap, see "What I'd do next."
+  flagged as a known gap. Superseded by §6 below.
 
 ## 5. What I'd do next with more time
 
-- Add `vitest` and port the manual `tsx` checks into a real test file
-  (`ruleEngine.test.ts`), including edge cases: empty rule groups, a
-  multiple-choice `excludes` check, deeply nested groups (3+ levels).
+- ~~Add `vitest` and port the manual `tsx` checks into a real test file~~ — done, see §6.
 - Promote `schema/` to an npm workspace package instead of file duplication
   once there's a third consumer or the files start drifting.
 - Admin-side live preview embedded in-app (currently opens the Web app in a
   new tab via `?id=`) so authors don't context-switch to check their logic.
 - Drag-and-drop question reordering (currently up/down buttons).
+
+## 6. Adding a real test framework (vitest)
+
+Wired up `vitest` in both `frontend/web` and `frontend/admin` (pinned to
+`^2.1.9` to stay compatible with the project's Vite 5.4 — vitest 4.x requires
+Vite 6+). Added `vitest.config.ts` (plain `node` environment — the rule engine
+has zero DOM dependency by design, see CLAUDE.md constraint #3) and `npm test`
+in each app's `package.json`.
+
+`src/schema/ruleEngine.test.ts` replaces the manual `tsx` snippet as the
+source of truth, and is duplicated byte-for-byte between the two apps
+following the same convention as `types.ts`/`ruleEngine.ts` (see ADR §3).
+Coverage:
+
+- single-choice branching across all three employment paths (the case the
+  manual script covered)
+- the nested `AND`/`OR` scoring-gated question, including a check that
+  `q_followup_required` and `q_all_clear` are mutually exclusive across
+  several answer combinations
+- `pruneAnswers` dropping stale answers when an earlier answer changes
+- edge cases explicitly called out in the original "what I'd do next" list:
+  empty `AND`/`OR` rule groups, `excludes` on a multi-select answer, and 3+
+  levels of nested groups
+- additionally added: `isAnswered`/`isEmpty` on missing vs. empty-array
+  answers, and numeric comparisons (`gt`/`gte`/`lt`/`lte`) with missing or
+  non-numeric input
+
+**Writing the numeric-comparison edge case caught a real bug**: for
+`gt`/`gte`/`lt`/`lte` conditions with `source: 'answer'`, the engine read
+`raw?.[0]` where `raw` is `string | string[] | undefined`. For a plain string
+answer (e.g. a text-question answer of `"10"`), `[0]` indexed the *character*
+(`"1"`) rather than the whole value, silently breaking any numeric comparison
+against a free-text or single-select answer stored as a string. Fixed by
+routing through the existing `toArray()` helper (`toArray(raw)[0]`) so string
+and array-valued answers are normalized the same way before the numeric
+comparison, in both copies of `ruleEngine.ts`. This is exactly the kind of
+regression a real test suite is meant to catch before it reaches the runtime
+app — the seed schema didn't happen to exercise a numeric comparison against
+a string answer, so the earlier manual `tsx` check never surfaced it.

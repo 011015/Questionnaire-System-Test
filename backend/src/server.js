@@ -8,7 +8,11 @@ const path = require('path');
 const express = require('express');
 const cors = require('cors');
 
-const DATA_FILE = path.join(__dirname, '..', 'data', 'questionnaires.json');
+// Overridable so tests can point at a throwaway file instead of the real
+// data store. Falls back to the normal on-disk location otherwise.
+const DATA_FILE = process.env.QUESTIONNAIRES_DATA_FILE
+  ? path.resolve(process.env.QUESTIONNAIRES_DATA_FILE)
+  : path.join(__dirname, '..', 'data', 'questionnaires.json');
 const PORT = process.env.PORT || 4000;
 
 function readAll() {
@@ -61,4 +65,10 @@ app.delete('/questionnaires/:id', (req, res) => {
   res.status(204).end();
 });
 
-app.listen(PORT, () => console.log(`Storage service running on http://localhost:${PORT}`));
+module.exports = app;
+
+// Only start listening when this file is run directly (`node src/server.js`
+// / `npm start`), not when it's required by a test file.
+if (require.main === module) {
+  app.listen(PORT, () => console.log(`Storage service running on http://localhost:${PORT}`));
+}

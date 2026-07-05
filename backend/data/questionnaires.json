@@ -121,5 +121,216 @@
         "questionIds": ["q_risk_symptoms", "q_recent_travel"]
       }
     ]
+  },
+
+  "nps-feedback": {
+    "id": "nps-feedback",
+    "title": "Post-Purchase NPS Feedback",
+    "description": "Score-gated branching: promoter/detractor/passive follow-ups driven entirely by a scoring rule, not raw answers.",
+    "version": 1,
+    "questions": [
+      {
+        "id": "q_nps_score",
+        "type": "single",
+        "title": "How likely are you to recommend us to a friend or colleague? (0 = not at all, 10 = extremely likely)",
+        "required": true,
+        "options": [
+          { "id": "opt_0", "label": "0", "value": "0", "score": 0 },
+          { "id": "opt_1", "label": "1", "value": "1", "score": 1 },
+          { "id": "opt_2", "label": "2", "value": "2", "score": 2 },
+          { "id": "opt_3", "label": "3", "value": "3", "score": 3 },
+          { "id": "opt_4", "label": "4", "value": "4", "score": 4 },
+          { "id": "opt_5", "label": "5", "value": "5", "score": 5 },
+          { "id": "opt_6", "label": "6", "value": "6", "score": 6 },
+          { "id": "opt_7", "label": "7", "value": "7", "score": 7 },
+          { "id": "opt_8", "label": "8", "value": "8", "score": 8 },
+          { "id": "opt_9", "label": "9", "value": "9", "score": 9 },
+          { "id": "opt_10", "label": "10", "value": "10", "score": 10 }
+        ]
+      },
+      {
+        "id": "q_promoter_followup",
+        "type": "text",
+        "title": "Awesome — what's the main reason you'd recommend us?",
+        "visibleIf": { "kind": "condition", "source": "score", "scoreId": "nps", "operator": "gte", "value": 9 }
+      },
+      {
+        "id": "q_detractor_followup",
+        "type": "text",
+        "title": "Sorry to hear that. What's the main thing we could improve?",
+        "visibleIf": { "kind": "condition", "source": "score", "scoreId": "nps", "operator": "lte", "value": 6 }
+      },
+      {
+        "id": "q_passive_followup",
+        "type": "text",
+        "title": "Thanks for the rating. What would it take to make you an enthusiastic promoter?",
+        "visibleIf": {
+          "kind": "group",
+          "combinator": "AND",
+          "rules": [
+            { "kind": "condition", "source": "score", "scoreId": "nps", "operator": "gte", "value": 7 },
+            { "kind": "condition", "source": "score", "scoreId": "nps", "operator": "lte", "value": 8 }
+          ]
+        }
+      }
+    ],
+    "scoring": [
+      { "id": "nps", "label": "NPS Score", "questionIds": ["q_nps_score"] }
+    ]
+  },
+
+  "event-rsvp": {
+    "id": "event-rsvp",
+    "title": "Event RSVP",
+    "description": "Exercises includes/excludes on a multi-select alongside simple single-answer branching.",
+    "version": 1,
+    "questions": [
+      {
+        "id": "q_attending",
+        "type": "single",
+        "title": "Will you be attending?",
+        "required": true,
+        "options": [
+          { "id": "opt_yes", "label": "Yes", "value": "yes" },
+          { "id": "opt_no", "label": "No", "value": "no" },
+          { "id": "opt_maybe", "label": "Maybe", "value": "maybe" }
+        ]
+      },
+      {
+        "id": "q_guest_count",
+        "type": "text",
+        "title": "How many guests will you bring (including yourself)?",
+        "placeholder": "e.g. 2",
+        "visibleIf": { "kind": "condition", "source": "answer", "questionId": "q_attending", "operator": "eq", "value": "yes" }
+      },
+      {
+        "id": "q_dietary_restrictions",
+        "type": "multiple",
+        "title": "Any dietary restrictions we should know about?",
+        "options": [
+          { "id": "opt_vegetarian", "label": "Vegetarian", "value": "vegetarian" },
+          { "id": "opt_vegan", "label": "Vegan", "value": "vegan" },
+          { "id": "opt_glutenfree", "label": "Gluten-free", "value": "gluten_free" },
+          { "id": "opt_allergy", "label": "Food allergy", "value": "allergy" },
+          { "id": "opt_none", "label": "None", "value": "none" }
+        ],
+        "visibleIf": { "kind": "condition", "source": "answer", "questionId": "q_attending", "operator": "eq", "value": "yes" }
+      },
+      {
+        "id": "q_allergy_details",
+        "type": "text",
+        "title": "Please describe your allergy so the caterer can accommodate it.",
+        "visibleIf": {
+          "kind": "condition",
+          "source": "answer",
+          "questionId": "q_dietary_restrictions",
+          "operator": "includes",
+          "value": "allergy"
+        }
+      },
+      {
+        "id": "q_vegetarian_vegan_note",
+        "type": "text",
+        "title": "You selected vegetarian but not vegan — any dairy/egg preferences we should note?",
+        "visibleIf": {
+          "kind": "group",
+          "combinator": "AND",
+          "rules": [
+            { "kind": "condition", "source": "answer", "questionId": "q_dietary_restrictions", "operator": "includes", "value": "vegetarian" },
+            { "kind": "condition", "source": "answer", "questionId": "q_dietary_restrictions", "operator": "excludes", "value": "vegan" }
+          ]
+        }
+      },
+      {
+        "id": "q_maybe_reminder_optin",
+        "type": "single",
+        "title": "Want a reminder email closer to the date?",
+        "options": [
+          { "id": "opt_reminder_yes", "label": "Yes, remind me", "value": "yes" },
+          { "id": "opt_reminder_no", "label": "No thanks", "value": "no" }
+        ],
+        "visibleIf": { "kind": "condition", "source": "answer", "questionId": "q_attending", "operator": "eq", "value": "maybe" }
+      }
+    ],
+    "scoring": []
+  },
+
+  "insurance-underwriting": {
+    "id": "insurance-underwriting",
+    "title": "Life Insurance Underwriting Screener",
+    "description": "Deliberately deep nested visibleIf to stress-test the recursive rule editor and evaluator.",
+    "version": 1,
+    "questions": [
+      {
+        "id": "q_age",
+        "type": "single",
+        "title": "What is your age range?",
+        "required": true,
+        "options": [
+          { "id": "opt_age_18_30", "label": "18–30", "value": "18_30" },
+          { "id": "opt_age_31_50", "label": "31–50", "value": "31_50" },
+          { "id": "opt_age_51_65", "label": "51–65", "value": "51_65" },
+          { "id": "opt_age_65plus", "label": "65+", "value": "65_plus" }
+        ]
+      },
+      {
+        "id": "q_smoker",
+        "type": "single",
+        "title": "Do you currently smoke or use tobacco products?",
+        "required": true,
+        "options": [
+          { "id": "opt_smoker_yes", "label": "Yes", "value": "yes" },
+          { "id": "opt_smoker_no", "label": "No", "value": "no" }
+        ]
+      },
+      {
+        "id": "q_preexisting_conditions",
+        "type": "multiple",
+        "title": "Have you been diagnosed with any of the following?",
+        "options": [
+          { "id": "opt_diabetes", "label": "Diabetes", "value": "diabetes", "score": 4 },
+          { "id": "opt_hypertension", "label": "Hypertension", "value": "hypertension", "score": 3 },
+          { "id": "opt_heart_disease", "label": "Heart disease", "value": "heart_disease", "score": 6 },
+          { "id": "opt_none", "label": "None of the above", "value": "none", "score": 0 }
+        ]
+      },
+      {
+        "id": "q_medical_exam_required",
+        "type": "text",
+        "title": "Based on your responses, a medical exam is required before we can finalize your quote. Please list your preferred clinic or ask us to arrange one.",
+        "visibleIf": {
+          "kind": "group",
+          "combinator": "OR",
+          "rules": [
+            { "kind": "condition", "source": "score", "scoreId": "underwritingRisk", "operator": "gte", "value": 10 },
+            {
+              "kind": "group",
+              "combinator": "AND",
+              "rules": [
+                { "kind": "condition", "source": "answer", "questionId": "q_smoker", "operator": "eq", "value": "yes" },
+                { "kind": "condition", "source": "answer", "questionId": "q_age", "operator": "eq", "value": "51_65" }
+              ]
+            },
+            {
+              "kind": "group",
+              "combinator": "AND",
+              "rules": [
+                { "kind": "condition", "source": "answer", "questionId": "q_preexisting_conditions", "operator": "includes", "value": "diabetes" },
+                { "kind": "condition", "source": "answer", "questionId": "q_preexisting_conditions", "operator": "includes", "value": "hypertension" }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "id": "q_standard_approval_note",
+        "type": "text",
+        "title": "No medical exam needed — anything else you'd like us to know before we finalize your quote?",
+        "visibleIf": { "kind": "condition", "source": "score", "scoreId": "underwritingRisk", "operator": "lt", "value": 10 }
+      }
+    ],
+    "scoring": [
+      { "id": "underwritingRisk", "label": "Underwriting Risk", "questionIds": ["q_preexisting_conditions"] }
+    ]
   }
 }
